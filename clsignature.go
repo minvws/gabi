@@ -5,8 +5,6 @@
 package gabi
 
 import (
-	"crypto/rand"
-
 	"github.com/go-errors/errors"
 	"github.com/privacybydesign/gabi/big"
 	"github.com/privacybydesign/gabi/gabikeys"
@@ -57,7 +55,8 @@ func signMessageBlockAndCommitment(sk *gabikeys.PrivateKey, pk *gabikeys.PublicK
 	Q := new(big.Int).Mul(pk.Z, invNumerator)
 	Q.Mod(Q, pk.N)
 
-	e, err := common.RandomPrimeInRange(rand.Reader, pk.Params.Le-1, pk.Params.LePrime-1)
+	// Fetch element from boltDB (or precalculate if not present)
+	e, err := common.RandomPrecalcPrimeInRange(common.BoltStorage, pk.Params.Le-1, pk.Params.LePrime-1)
 	if err != nil {
 		return nil, err
 	}
