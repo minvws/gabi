@@ -30,7 +30,7 @@ type CLSignature struct {
 
 // SignMessageBlock signs a message block (ms) and a commitment (U) using the
 // Camenisch-Lysyanskaya signature scheme as used in the IdeMix system.
-func signMessageBlockAndCommitment(sk *gabikeys.PrivateKey, pk *gabikeys.PublicKey, U *big.Int, ms []*big.Int) (
+func signMessageBlockAndCommitment(storage common.PrimeStorage, sk *gabikeys.PrivateKey, pk *gabikeys.PublicKey, U *big.Int, ms []*big.Int) (
 	*CLSignature, error) {
 	R, err := RepresentToPublicKey(pk, ms)
 	if err != nil {
@@ -56,7 +56,7 @@ func signMessageBlockAndCommitment(sk *gabikeys.PrivateKey, pk *gabikeys.PublicK
 	Q.Mod(Q, pk.N)
 
 	// Fetch element from boltDB (or precalculate if not present)
-	e, err := common.RandomPrecalcPrimeInRange(common.BoltStorage, pk.Params.Le-1, pk.Params.LePrime-1)
+	e, err := storage.Fetch(pk.Params.Le-1, pk.Params.LePrime-1)
 	if err != nil {
 		return nil, err
 	}
@@ -75,8 +75,8 @@ func signMessageBlockAndCommitment(sk *gabikeys.PrivateKey, pk *gabikeys.PublicK
 
 // SignMessageBlock signs a message block (ms) using the Camenisch-Lysyanskaya
 // signature scheme as used in the IdeMix system.
-func SignMessageBlock(sk *gabikeys.PrivateKey, pk *gabikeys.PublicKey, ms []*big.Int) (*CLSignature, error) {
-	return signMessageBlockAndCommitment(sk, pk, big.NewInt(1), ms)
+func SignMessageBlock(storage common.PrimeStorage, sk *gabikeys.PrivateKey, pk *gabikeys.PublicKey, ms []*big.Int) (*CLSignature, error) {
+	return signMessageBlockAndCommitment(storage, sk, pk, big.NewInt(1), ms)
 }
 
 // Verify checks whether the signature is correct while being given a public key

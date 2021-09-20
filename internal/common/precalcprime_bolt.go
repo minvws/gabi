@@ -1,7 +1,3 @@
-// Copyright 2016 Maarten Everts. All rights reserved.
-// Use of this source code is governed by a BSD-style
-// license that can be found in the LICENSE file.
-
 package common
 
 import (
@@ -16,7 +12,7 @@ type boltStorage struct {
 }
 
 // BucketName is where the primes in start/length are stored (sprintf'ed)
-const BucketName = "primes_%s_%s"
+const BucketName = "primes_%d_%d"
 
 // BoltDBFile is the filename of the boltDB storage
 const BoltDBFile = "primes.db"
