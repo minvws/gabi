@@ -1,22 +1,19 @@
 package pool
 
 import (
-	"io"
-
+	"crypto/rand"
 	"github.com/privacybydesign/gabi/big"
 	"github.com/privacybydesign/gabi/internal/common"
 )
 
 type randomPool struct {
-	reader io.Reader
+
 }
 
-func NewRandomPool(r io.Reader) PrimePool {
-	return &randomPool{
-		reader: r,
-	}
+func NewRandomPool() PrimePool {
+	return &randomPool{}
 }
 
 func (p *randomPool) Fetch(start, length uint) (*big.Int, error) {
-	return common.RandomPrimeInRange(p.reader, start, length)
+	return common.RandomPrimeInRange(rand.Reader, start, length)
 }

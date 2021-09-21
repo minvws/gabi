@@ -6,6 +6,7 @@ package gabi
 
 import (
 	"fmt"
+	"github.com/privacybydesign/gabi/pool"
 	"os"
 	"testing"
 	"time"
@@ -215,7 +216,7 @@ func TestTestKeys(t *testing.T) {
 
 func TestCLSignature(t *testing.T) {
 	m := []*big.Int{big.NewInt(1), big.NewInt(2), big.NewInt(3)}
-	sig, err := SignMessageBlock(common.NewRandomStorage(), testPrivK, testPubK, m)
+	sig, err := SignMessageBlock(pool.NewRandomPool(), testPrivK, testPubK, m)
 
 	assert.NoError(t, err)
 	assert.True(t, sig.Verify(testPubK, m), "CLSignature did not verify, whereas it should.")
@@ -225,7 +226,7 @@ func TestCLSignature(t *testing.T) {
 
 func TestClSignatureRandomize(t *testing.T) {
 	m := []*big.Int{big.NewInt(1), big.NewInt(2), big.NewInt(3)}
-	sig, err := SignMessageBlock(common.NewRandomStorage(), testPrivK, testPubK, m)
+	sig, err := SignMessageBlock(pool.NewRandomPool(), testPrivK, testPubK, m)
 	assert.NoError(t, err)
 
 	assert.True(t, sig.Verify(testPubK, m), "CLSignature did not verify, whereas it should.")
@@ -307,7 +308,7 @@ func TestProofS(t *testing.T) {
 	assert.NoError(t, err)
 
 	issuer := NewIssuer(testPrivK, testPubK, context)
-	sig, _, err := issuer.signCommitmentAndAttributes(common.NewRandomStorage(), U, testAttributes1, nil)
+	sig, _, err := issuer.signCommitmentAndAttributes(pool.NewRandomPool(), U, testAttributes1, nil)
 	assert.NoError(t, err)
 
 	proof, err := issuer.proveSignature(sig, nonce)
@@ -357,7 +358,7 @@ func TestSignatureMessage(t *testing.T) {
 	assert.NoError(t, err)
 
 	issuer := NewIssuer(testPrivK, testPubK, context)
-	_, err = issuer.IssueSignature(common.NewRandomStorage(), commitMsg.U, testAttributes1, nil, nonce2, nil)
+	_, err = issuer.IssueSignature(pool.NewRandomPool(), commitMsg.U, testAttributes1, nil, nonce2, nil)
 	assert.NoError(t, err, "error in IssueSignature")
 }
 
@@ -376,14 +377,14 @@ func TestFullIssuance(t *testing.T) {
 	assert.NoError(t, err)
 
 	issuer := NewIssuer(testPrivK, testPubK, context)
-	msg, err := issuer.IssueSignature(common.NewRandomStorage(), commitMsg.U, testAttributes1, nil, nonce2, nil)
+	msg, err := issuer.IssueSignature(pool.NewRandomPool(), commitMsg.U, testAttributes1, nil, nonce2, nil)
 	assert.NoError(t, err, "error in IssueSignature")
 	_, err = b.ConstructCredential(msg, testAttributes1)
 	assert.NoError(t, err, "error in IssueSignature")
 }
 
 func TestShowingProof(t *testing.T) {
-	signature, err := SignMessageBlock(common.NewRandomStorage(), testPrivK, testPubK, testAttributes1)
+	signature, err := SignMessageBlock(pool.NewRandomPool(), testPrivK, testPubK, testAttributes1)
 	assert.NoError(t, err, "error producing CL signature.")
 	cred := &Credential{Pk: testPubK, Attributes: testAttributes1, Signature: signature}
 	disclosed := []int{1, 2}
@@ -475,7 +476,7 @@ func TestFullIssuanceAndShowing(t *testing.T) {
 	commitMsg, err := builder.CommitToSecretAndProve(nonce1)
 	assert.NoError(t, err)
 	issuer := NewIssuer(testPrivK, testPubK, context)
-	sigMsg, err := issuer.IssueSignature(common.NewRandomStorage(), commitMsg.U, testAttributes1, nil, nonce2, nil)
+	sigMsg, err := issuer.IssueSignature(pool.NewRandomPool(), commitMsg.U, testAttributes1, nil, nonce2, nil)
 	assert.NoError(t, err, "error in IssueSignature")
 
 	cred, err := builder.ConstructCredential(sigMsg, testAttributes1)
@@ -508,7 +509,7 @@ func TestFullBoundIssuanceAndShowing(t *testing.T) {
 	assert.NoError(t, err)
 
 	issuer1 := NewIssuer(testPrivK, testPubK, context)
-	ism, err := issuer1.IssueSignature(common.NewRandomStorage(), commitMsg.U, testAttributes1, nil, nonce2, nil)
+	ism, err := issuer1.IssueSignature(pool.NewRandomPool(), commitMsg.U, testAttributes1, nil, nonce2, nil)
 	assert.NoError(t, err, "error creating Issue Signature")
 
 	cred1, err := cb1.ConstructCredential(ism, testAttributes1)
@@ -530,7 +531,7 @@ func TestFullBoundIssuanceAndShowing(t *testing.T) {
 
 	assert.True(t, commitMsg2.Proofs.Verify([]*gabikeys.PublicKey{testPubK, testPubK}, context, nonce1, false, nil), "Proofs in commit message do not verify!")
 
-	msg, err := issuer2.IssueSignature(common.NewRandomStorage(), commitMsg2.U, testAttributes1, nil, nonce2, nil)
+	msg, err := issuer2.IssueSignature(pool.NewRandomPool(), commitMsg2.U, testAttributes1, nil, nonce2, nil)
 	assert.NoError(t, err, "error creating Issue Signature")
 	cred2, err := cb2.ConstructCredential(msg, testAttributes1)
 	assert.NoError(t, err, "error creating credential")
@@ -612,7 +613,7 @@ func createCredential(t *testing.T, context, secret *big.Int, issuer *Issuer) *C
 	commitMsg, err := cb.CommitToSecretAndProve(nonce1)
 	assert.NoError(t, err)
 
-	ism, err := issuer.IssueSignature(common.NewRandomStorage(), commitMsg.U, testAttributes1, nil, nonce2, nil)
+	ism, err := issuer.IssueSignature(pool.NewRandomPool(), commitMsg.U, testAttributes1, nil, nonce2, nil)
 	assert.NoError(t, err, "error creating Issue Signature")
 
 	cred, err := cb.ConstructCredential(ism, testAttributes1)
@@ -738,7 +739,7 @@ func TestFullBoundIssuanceAndShowingRandomIssuers(t *testing.T) {
 
 	assert.True(t, commitMsg.Proofs.Verify([]*gabikeys.PublicKey{issuer1.Pk, issuer2.Pk}, context, nonce1, false, nil), "Proofs in commit message do not verify!")
 
-	msg, err := issuer2.IssueSignature(common.NewRandomStorage(), commitMsg.U, testAttributes2, nil, nonce2, nil)
+	msg, err := issuer2.IssueSignature(pool.NewRandomPool(), commitMsg.U, testAttributes2, nil, nonce2, nil)
 	assert.NoError(t, err, "error creating Issue Signature")
 	cred2, err := cb2.ConstructCredential(msg, testAttributes2)
 	assert.NoError(t, err, "error creating credential")
@@ -793,7 +794,7 @@ func TestBigAttribute(t *testing.T) {
 		new(big.Int).SetBytes([]byte("two")),
 		new(big.Int).SetBytes([]byte("This is a very long attribute: its size of 132 bytes exceeds the maximum message length of all currently supported public key sizes.")),
 	}
-	signature, err := SignMessageBlock(common.NewRandomStorage(), testPrivK, testPubK, attrs)
+	signature, err := SignMessageBlock(pool.NewRandomPool(), testPrivK, testPubK, attrs)
 	assert.NoError(t, err, "error producing CL signature.")
 	cred := &Credential{Pk: testPubK, Attributes: attrs, Signature: signature}
 	assert.True(t, signature.Verify(testPubK, attrs), "Failed to create CL signature over large attribute")
@@ -840,7 +841,7 @@ func TestNotRevoked(t *testing.T) {
 
 	// Issuance
 	attrs := revocationAttrs(witness)
-	signature, err := SignMessageBlock(common.NewRandomStorage(), testPrivK, testPubK, attrs)
+	signature, err := SignMessageBlock(pool.NewRandomPool(), testPrivK, testPubK, attrs)
 	require.NoError(t, err)
 	require.True(t, signature.Verify(testPubK, attrs))
 
@@ -895,7 +896,7 @@ func TestFullIssueAndShowWithRevocation(t *testing.T) {
 
 	issuer := NewIssuer(testPrivK, testPubK, context)
 	attrs := revocationAttrs(witness)
-	msg, err := issuer.IssueSignature(common.NewRandomStorage(), commitMsg.U, attrs, witness, nonce2, nil)
+	msg, err := issuer.IssueSignature(pool.NewRandomPool(), commitMsg.U, attrs, witness, nonce2, nil)
 	require.NoError(t, err, "error in IssueSignature")
 	cred, err := b.ConstructCredential(msg, attrs)
 	require.NoError(t, err, "error in ConstructCredential")
@@ -1030,7 +1031,7 @@ func TestRandomBlindIssuance(t *testing.T) {
 
 	// testAttributes3 = [a0, a1, a2 (nil), a3] becomes
 	// cred.Attributes = [sk, a0, a1, a2, a3] in the credential, with a2 the sum of two random 255-bit integers.
-	msg, err := issuer.IssueSignature(common.NewRandomStorage(), commitMsg.U, testAttributes3, nil, nonce2, []int{2})
+	msg, err := issuer.IssueSignature(pool.NewRandomPool(), commitMsg.U, testAttributes3, nil, nonce2, []int{2})
 	assert.NoError(t, err, "error in IssueSignature")
 	require.Len(t, msg.MIssuer, 1)
 	require.Contains(t, msg.MIssuer, 3)
@@ -1063,7 +1064,7 @@ func TestRandomBlindIssuanceTooFewAttributes(t *testing.T) {
 
 	// testAttributes3 = [a0, a1, a2 (nil), a3] becomes
 	// cred.Attributes = [sk, a0, a1, a2, a3] in the credential, with a2 the sum of two random 255-bit integers.
-	msg, err := issuer.IssueSignature(common.NewRandomStorage(), commitMsg.U, testAttributes3, nil, nonce2, []int{2})
+	msg, err := issuer.IssueSignature(pool.NewRandomPool(), commitMsg.U, testAttributes3, nil, nonce2, []int{2})
 	assert.NoError(t, err, "error in IssueSignature")
 	// The following line should fail because we don't give enough values for all non-randomblind attributes
 	// We give 2, but we need 3 (for a0, a1 and a3)
@@ -1091,7 +1092,7 @@ func TestMultipleRandomBlindIssuance(t *testing.T) {
 	// testAttributes4 = [a0, a1 (nil), a2 (nil), a3 (nil)] becomes
 	// cred.Attributes = [sk, a0, a1, a2, a3] in the credential,
 	// with a1, a2, a3 the sum of two random 255-bit integers.
-	msg, err := issuer.IssueSignature(common.NewRandomStorage(), commitMsg.U, testAttributes4, nil, nonce2, []int{1, 2, 3})
+	msg, err := issuer.IssueSignature(pool.NewRandomPool(), commitMsg.U, testAttributes4, nil, nonce2, []int{1, 2, 3})
 	assert.NoError(t, err, "error in IssueSignature")
 
 	cred, err := b.ConstructCredential(msg, testAttributes4)
@@ -1124,7 +1125,7 @@ func TestIssueSignatureNonZeroRandomBlindAttributes(t *testing.T) {
 	issuer := NewIssuer(testPrivK, testPubK, context)
 
 	// testAttributes1 = [a0, a1, a2, a3] (all non-nil)
-	_, err = issuer.IssueSignature(common.NewRandomStorage(), commitMsg.U, testAttributes1, nil, nonce2, []int{2})
+	_, err = issuer.IssueSignature(pool.NewRandomPool(), commitMsg.U, testAttributes1, nil, nonce2, []int{2})
 
 	// The caller of IssueSignature is responsible for initializing the attributes at
 	// the random blind indices as nil, which was not done in this case, so we expect an error.
@@ -1149,7 +1150,7 @@ func TestConstructCredentialNonZeroRandomBlindAttributes(t *testing.T) {
 	issuer := NewIssuer(testPrivK, testPubK, context)
 
 	// testAttributes3 = [a0, a1, a2 (nil), a3]
-	msg, err := issuer.IssueSignature(common.NewRandomStorage(), commitMsg.U, testAttributes3, nil, nonce2, []int{2})
+	msg, err := issuer.IssueSignature(pool.NewRandomPool(), commitMsg.U, testAttributes3, nil, nonce2, []int{2})
 	assert.NoError(t, err, "error in IssueSignature")
 
 	// testAttributes1 are all non-nil, this should give an error
