@@ -9,6 +9,7 @@ import (
 	"github.com/privacybydesign/gabi/big"
 	"github.com/privacybydesign/gabi/gabikeys"
 	"github.com/privacybydesign/gabi/internal/common"
+	"github.com/privacybydesign/gabi/pool"
 )
 
 // RepresentToPublicKey returns a representation of the given exponents in terms of the R bases
@@ -30,7 +31,7 @@ type CLSignature struct {
 
 // SignMessageBlock signs a message block (ms) and a commitment (U) using the
 // Camenisch-Lysyanskaya signature scheme as used in the IdeMix system.
-func signMessageBlockAndCommitment(storage common.PrimeStorage, sk *gabikeys.PrivateKey, pk *gabikeys.PublicKey, U *big.Int, ms []*big.Int) (
+func signMessageBlockAndCommitment(pool pool.PrimePool, sk *gabikeys.PrivateKey, pk *gabikeys.PublicKey, U *big.Int, ms []*big.Int) (
 	*CLSignature, error) {
 	R, err := RepresentToPublicKey(pk, ms)
 	if err != nil {
@@ -56,7 +57,7 @@ func signMessageBlockAndCommitment(storage common.PrimeStorage, sk *gabikeys.Pri
 	Q.Mod(Q, pk.N)
 
 	// Fetch element from boltDB (or precalculate if not present)
-	e, err := storage.Fetch(pk.Params.Le-1, pk.Params.LePrime-1)
+	e, err := pool.Fetch(pk.Params.Le-1, pk.Params.LePrime-1)
 	if err != nil {
 		return nil, err
 	}
@@ -75,8 +76,8 @@ func signMessageBlockAndCommitment(storage common.PrimeStorage, sk *gabikeys.Pri
 
 // SignMessageBlock signs a message block (ms) using the Camenisch-Lysyanskaya
 // signature scheme as used in the IdeMix system.
-func SignMessageBlock(storage common.PrimeStorage, sk *gabikeys.PrivateKey, pk *gabikeys.PublicKey, ms []*big.Int) (*CLSignature, error) {
-	return signMessageBlockAndCommitment(storage, sk, pk, big.NewInt(1), ms)
+func SignMessageBlock(pool pool.PrimePool, sk *gabikeys.PrivateKey, pk *gabikeys.PublicKey, ms []*big.Int) (*CLSignature, error) {
+	return signMessageBlockAndCommitment(pool, sk, pk, big.NewInt(1), ms)
 }
 
 // Verify checks whether the signature is correct while being given a public key
