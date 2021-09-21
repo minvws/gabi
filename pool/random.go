@@ -1,6 +1,7 @@
 package pool
 
 import (
+	"encoding/json"
 	"io"
 
 	"github.com/privacybydesign/gabi/big"
@@ -9,6 +10,15 @@ import (
 
 type randomPool struct {
 	reader io.Reader
+}
+
+func (p *randomPool) StatsJSON() ([]byte, error) {
+	type Stats struct {
+		Name string
+	}
+	return json.Marshal(Stats{
+		Name: "random",
+	})
 }
 
 func NewRandomPool(r io.Reader) PrimePool {

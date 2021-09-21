@@ -11,6 +11,7 @@ import (
 
 type PrimePool interface {
 	Fetch(start, length uint) (*big.Int, error)
+	StatsJSON() ([]byte, error)
 }
 
 // RandomPrimeInRangeFromPool returns a precalculated prime from a bolt pool
