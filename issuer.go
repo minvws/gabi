@@ -8,6 +8,7 @@ import (
 	"crypto/rand"
 
 	"github.com/go-errors/errors"
+	"github.com/privacybydesign/gabi/pool"
 
 	"github.com/privacybydesign/gabi/big"
 	"github.com/privacybydesign/gabi/internal/common"
@@ -28,10 +29,10 @@ func NewIssuer(sk *PrivateKey, pk *PublicKey, context *big.Int) *Issuer {
 
 // IssueSignature produces an IssueSignatureMessage for the attributes based on
 // the IssueCommitmentMessage provided. Note that this function DOES NOT check
-// the proofs containted in the IssueCommitmentMessage! That needs to be done at
+// the proofs contained in the IssueCommitmentMessage! That needs to be done at
 // a higher level!
-func (i *Issuer) IssueSignature(U *big.Int, attributes []*big.Int, witness *revocation.Witness, nonce2 *big.Int, blind []int) (*IssueSignatureMessage, error) {
-	signature, mIssuer, err := i.signCommitmentAndAttributes(U, attributes, blind)
+func (i *Issuer) IssueSignature(pool pool.PrimePool, U *big.Int, attributes []*big.Int, witness *revocation.Witness, nonce2 *big.Int, blind []int) (*IssueSignatureMessage, error) {
+	signature, mIssuer, err := i.signCommitmentAndAttributes(pool, U, attributes, blind)
 	if err != nil {
 		return nil, err
 	}
@@ -43,7 +44,7 @@ func (i *Issuer) IssueSignature(U *big.Int, attributes []*big.Int, witness *revo
 // and the attributes (some of which might be unknown to the issuer).
 // Arg "blind" is a list of indices representing the random blind attributes.
 // The signature does not verify (yet) due to blinding factors present.
-func (i *Issuer) signCommitmentAndAttributes(U *big.Int, attributes []*big.Int, blind []int) (*CLSignature, map[int]*big.Int, error) {
+func (i *Issuer) signCommitmentAndAttributes(pool pool.PrimePool, U *big.Int, attributes []*big.Int, blind []int) (*CLSignature, map[int]*big.Int, error) {
 	mIssuer := make(map[int]*big.Int)
 	ms := append([]*big.Int{big.NewInt(0)}, attributes...)
 
@@ -60,7 +61,7 @@ func (i *Issuer) signCommitmentAndAttributes(U *big.Int, attributes []*big.Int, 
 		ms[j+1] = r
 	}
 
-	cl, err := signMessageBlockAndCommitment(i.Sk, i.Pk, U, ms)
+	cl, err := signMessageBlockAndCommitment(pool, i.Sk, i.Pk, U, ms)
 	if err != nil {
 		return nil, nil, err
 	}

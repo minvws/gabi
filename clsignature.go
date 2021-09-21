@@ -5,10 +5,9 @@
 package gabi
 
 import (
-	"crypto/rand"
-
 	"github.com/privacybydesign/gabi/big"
 	"github.com/privacybydesign/gabi/internal/common"
+	"github.com/privacybydesign/gabi/pool"
 )
 
 // RepresentToPublicKey returns a representation of the given exponents in terms of the R bases
@@ -30,7 +29,7 @@ type CLSignature struct {
 
 // SignMessageBlock signs a message block (ms) and a commitment (U) using the
 // Camenisch-Lysyanskaya signature scheme as used in the IdeMix system.
-func signMessageBlockAndCommitment(sk *PrivateKey, pk *PublicKey, U *big.Int, ms []*big.Int) (
+func signMessageBlockAndCommitment(pool pool.PrimePool, sk *PrivateKey, pk *PublicKey, U *big.Int, ms []*big.Int) (
 	*CLSignature, error) {
 	R, err := RepresentToPublicKey(pk, ms)
 	if err != nil {
@@ -49,7 +48,8 @@ func signMessageBlockAndCommitment(sk *PrivateKey, pk *PublicKey, U *big.Int, ms
 	Q := new(big.Int).Mul(pk.Z, invNumerator)
 	Q.Mod(Q, pk.N)
 
-	e, err := common.RandomPrimeInRange(rand.Reader, pk.Params.Le-1, pk.Params.LePrime-1)
+	// Fetch element from boltDB (or precalculate if not present)
+	e, err := pool.Fetch(pk.Params.Le-1, pk.Params.LePrime-1)
 	if err != nil {
 		return nil, err
 	}
@@ -65,8 +65,8 @@ func signMessageBlockAndCommitment(sk *PrivateKey, pk *PublicKey, U *big.Int, ms
 
 // SignMessageBlock signs a message block (ms) using the Camenisch-Lysyanskaya
 // signature scheme as used in the IdeMix system.
-func SignMessageBlock(sk *PrivateKey, pk *PublicKey, ms []*big.Int) (*CLSignature, error) {
-	return signMessageBlockAndCommitment(sk, pk, big.NewInt(1), ms)
+func SignMessageBlock(pool pool.PrimePool, sk *PrivateKey, pk *PublicKey, ms []*big.Int) (*CLSignature, error) {
+	return signMessageBlockAndCommitment(pool, sk, pk, big.NewInt(1), ms)
 }
 
 // Verify checks whether the signature is correct while being given a public key
